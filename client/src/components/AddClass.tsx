@@ -1,56 +1,64 @@
 import "./AddClass.css";
 import Axios from "axios";
-import TakenClass from "./types";
+import RawClass from "./types";
 import { useState } from "react";
 import { Grid, GridItem } from "@chakra-ui/react";
 import { Input } from "@chakra-ui/react";
 
 const AddClass = () => {
   const mapping: Record<string, number> = {
-    "CI-H": 0,
-    "CI-M": 1,
+    "HASS-H": 0,
+    "HASS-A": 1,
     "HASS-S": 2,
-    "HASS-H": 3,
-    "HASS-A": 4,
+    "HASS-E": 3,
+    "CI-H": 4,
+    "CI-HW": 5,
   };
+  const shortHandMapping = {
+    hh: "HASS-H",
+    ha: "HASS-A",
+    hs: "HASS-S",
+    he: "HASS-E",
+    ci: "CI-H",
+    cw: "CI-HW",
+  };
+
   const [classNumber, setClassNumber] = useState("");
 
   // function to add a class to the local storage database
   const addAClass = () => {
     Axios.post("http://localhost:3000/addClass", {
-      subject_id: classNumber,
+      no: classNumber,
     }).then((response) => {
       if (localStorage.getItem("classesTaken") == null) {
         localStorage.setItem("classesTaken", "[]");
       }
-      var old_data = JSON.parse(localStorage.getItem("classesTaken") as string);
+      var oldData = JSON.parse(localStorage.getItem("classesTaken") as string);
       // ensure this class isn't already in the local storage database
-      if (
-        !old_data.some(
-          (item: TakenClass) => item.subject_id == response.data.subject_id
-        )
-      ) {
+      if (!oldData.some((item: RawClass) => item.no == response.data.no)) {
         // add this class to the local storage database "classesTaken"
-        old_data.push(response.data);
-        localStorage.setItem("classesTaken", JSON.stringify(old_data));
+        oldData.push(response.data);
+        localStorage.setItem("classesTaken", JSON.stringify(oldData));
 
         if (localStorage.getItem("requirements_filled") == null) {
           localStorage.setItem("requirements_filled", "[0, 0, 0, 0, 0]");
         }
         // update the requirements filled in local storage
-        var reqs_filled = JSON.parse(
+        var reqsFilled = JSON.parse(
           localStorage.getItem("requirements_filled") as string
         );
-        reqs_filled[mapping[response.data.hass_attribute]] += 1;
 
-        if (response.data.communication_requirement) {
-          reqs_filled[mapping[response.data.communication_requirement]] += 1;
+        // a CI-HW class is also a CI-H class
+        if (response.data["cw"]) {
+          reqsFilled[mapping["CI-H"]] += 1;
         }
+        Object.entries(shortHandMapping).forEach(([key, value]) => {
+          if (response.data[key]) {
+            reqsFilled[mapping[value]] += 1;
+          }
+        });
 
-        localStorage.setItem(
-          "requirements_filled",
-          JSON.stringify(reqs_filled)
-        );
+        localStorage.setItem("requirements_filled", JSON.stringify(reqsFilled));
       }
     });
   };

@@ -1,18 +1,25 @@
 import "./ClassesTaken.css";
-import TakenClass from "./types";
+import RawClass from "./types";
 import {
   Table,
   Thead,
   Tbody,
-  Tfoot,
   Tr,
   Th,
   Td,
-  TableCaption,
   TableContainer,
 } from "@chakra-ui/react";
 
 const ClassesTaken = () => {
+  const shortHandMapping = {
+    hh: "HASS-H",
+    ha: "HASS-A",
+    hs: "HASS-S",
+    he: "HASS-E",
+    ci: "CI-H",
+    cw: "CI-HW",
+  };
+
   if (localStorage.getItem("classesTaken") == null) {
     localStorage.setItem("classesTaken", "[]");
   }
@@ -31,12 +38,28 @@ const ClassesTaken = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {classesTaken.map((classTaken: TakenClass) => {
+            {/* {classesTaken.map((classTaken: TakenClass) => { */}
+            {classesTaken.map((classTaken: RawClass) => {
+              let content;
+              if (classTaken.hh) {
+                content = shortHandMapping.hh;
+              } else if (classTaken.ha) {
+                content = shortHandMapping.ha;
+              } else if (classTaken.hs) {
+                content = shortHandMapping.hs;
+              } else if (classTaken.he) {
+                content = shortHandMapping.he;
+              } else if (classTaken.ci) {
+                content = shortHandMapping.ci;
+              } else if (classTaken.cw) {
+                content = shortHandMapping.cw;
+              }
+
               return (
                 <Tr>
-                  <Td>{classTaken.subject_id}</Td>
-                  <Td>{classTaken.rating}</Td>
-                  <Td>{classTaken.hass_attribute}</Td>
+                  <Td>{classTaken.no}</Td>
+                  <Td>{classTaken.ra}</Td>
+                  <Td>{content}</Td>
                 </Tr>
               );
             })}
