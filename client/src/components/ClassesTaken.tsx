@@ -1,5 +1,6 @@
 import "./ClassesTaken.css";
 import RawClass from "./types";
+import { longToIndex, longToShort, shortToLong } from "./objects";
 import {
   Table,
   Thead,
@@ -8,28 +9,39 @@ import {
   Th,
   Td,
   TableContainer,
+  IconButton,
 } from "@chakra-ui/react";
+import { DeleteIcon } from "@chakra-ui/icons";
 
-const ClassesTaken = () => {
-  const shortHandMapping = {
-    hh: "HASS-H",
-    ha: "HASS-A",
-    hs: "HASS-S",
-    he: "HASS-E",
-    ci: "CI-H",
-    cw: "CI-HW",
+interface ClassesTakenProps {
+  onDeleteClass: (index: number) => void;
+  onAddReqNeeded: (hassType: string) => void;
+}
+
+const ClassesTaken = ({ onDeleteClass, onAddReqNeeded }: ClassesTakenProps) => {
+  let storageClassesTaken = JSON.parse(
+    localStorage.getItem("classesTaken") as string
+  );
+
+  const handdleDeleteClass = (index: number, content: string) => {
+    // update classesTaken
+    const updatedClassesTaken = [...storageClassesTaken];
+    updatedClassesTaken.splice(index, 1);
+    localStorage.setItem("classesTaken", JSON.stringify(updatedClassesTaken));
+    // update reqsSoFar
+    const reqsSoFar = JSON.parse(localStorage.getItem("reqsSoFar") as string);
+    reqsSoFar[longToIndex[content]] -= 1;
+    localStorage.setItem("reqsSoFar", JSON.stringify(reqsSoFar));
+
+    const hassType = longToShort[content];
+    onAddReqNeeded(hassType);
   };
-
-  if (localStorage.getItem("classesTaken") == null) {
-    localStorage.setItem("classesTaken", "[]");
-  }
-  var classesTaken = JSON.parse(localStorage.getItem("classesTaken") as string);
 
   return (
     <div className="classesTakenContainer">
       <h4 className="card-header">Classes Taken</h4>
       <TableContainer>
-        <Table variant="striped" colorScheme="teal">
+        <Table variant="striped" colorScheme="purple">
           <Thead>
             <Tr>
               <Th>Num.</Th>
@@ -38,28 +50,37 @@ const ClassesTaken = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {/* {classesTaken.map((classTaken: TakenClass) => { */}
-            {classesTaken.map((classTaken: RawClass) => {
-              let content;
+            {storageClassesTaken.map((classTaken: RawClass, index: number) => {
+              let content = "";
               if (classTaken.hh) {
-                content = shortHandMapping.hh;
+                content = shortToLong.hh;
               } else if (classTaken.ha) {
-                content = shortHandMapping.ha;
+                content = shortToLong.ha;
               } else if (classTaken.hs) {
-                content = shortHandMapping.hs;
+                content = shortToLong.hs;
               } else if (classTaken.he) {
-                content = shortHandMapping.he;
+                content = shortToLong.he;
               } else if (classTaken.ci) {
-                content = shortHandMapping.ci;
+                content = shortToLong.ci;
               } else if (classTaken.cw) {
-                content = shortHandMapping.cw;
+                content = shortToLong.cw;
               }
-
               return (
                 <Tr>
                   <Td>{classTaken.no}</Td>
                   <Td>{classTaken.ra}</Td>
                   <Td>{content}</Td>
+                  <Td>
+                    <IconButton
+                      aria-label="Delete"
+                      icon={<DeleteIcon />}
+                      size="sm"
+                      onClick={() => {
+                        onDeleteClass(index);
+                        handdleDeleteClass(index, content);
+                      }}
+                    />
+                  </Td>
                 </Tr>
               );
             })}

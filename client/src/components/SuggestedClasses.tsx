@@ -1,8 +1,8 @@
 import "./SuggestedClasses.css";
 import Axios from "axios";
-import { useState, useEffect } from "react";
-import TakenClass from "./types";
+import { useEffect } from "react";
 import RawClass from "./types";
+import { indexToLong, longToShort } from "./objects";
 import {
   Table,
   Thead,
@@ -13,67 +13,43 @@ import {
   TableContainer,
 } from "@chakra-ui/react";
 
-const SuggestedClasses = () => {
-  const [reqsNeeded, setReqsNeeded] = useState<TakenClass[]>([]);
-  const mapping: Record<number, string> = {
-    0: "HASS-H",
-    1: "HASS-A",
-    2: "HASS-S",
-    3: "HASS-E",
-    4: "CI-H",
-    5: "CI-HW",
-  };
-  const shortHandMapping: Record<string, string> = {
-    "HASS-H": "hh",
-    "HASS-A": "ha",
-    "HASS-S": "hs",
-    "HASS-E": "he",
-    "CI-H": "ci",
-    "CI-HW": "cw",
-  };
+interface SuggestedClassesProps {
+  classesTaken: RawClass[];
+  reqsNeeded: RawClass[];
+  onUpdateReqsNeeded: (newReqsNeeded: RawClass[]) => void;
+}
 
-  localStorage.setItem("requirements_satisfied", "[1, 1, 1, 1, 2]");
-  const requirements_satisfied = JSON.parse(
-    localStorage.getItem("requirements_satisfied") as string
-  );
-
-  var reqs_filled = JSON.parse(
-    localStorage.getItem("requirements_filled") as string
-  );
-
-  if (localStorage.getItem("requirements_filled") == null) {
-    localStorage.setItem("requirements_filled", "[0, 0, 0, 0, 0]");
-  }
-
-  var old_data = JSON.parse(localStorage.getItem("classesTaken") as string);
+const SuggestedClasses = ({
+  classesTaken,
+  reqsNeeded,
+  onUpdateReqsNeeded,
+}: SuggestedClassesProps) => {
+  const reqsSoFar = JSON.parse(localStorage.getItem("reqsSoFar") as string);
+  const reqsComplete: number[] = [1, 1, 1, 1, 2];
   const newReqsNeeded: RawClass[] = [];
 
   useEffect(() => {
-    console.log(
-      "reqs filled",
-      reqs_filled,
-      "requirements needed:",
-      requirements_satisfied
-    );
-    for (var i = 0; i < requirements_satisfied.length; i++) {
-      if (reqs_filled[i] < requirements_satisfied[i]) {
+    // suggest classes based on which requirements are not yet fulfilled
+    for (var i = 0; i < reqsComplete.length; i++) {
+      if (reqsSoFar[i] < reqsComplete[i]) {
         var j = 0;
-        while (j < requirements_satisfied[i] - reqs_filled[i]) {
+        while (j < reqsComplete[i] - reqsSoFar[i]) {
           Axios.get("http://localhost:3000/getClass", {
             params: {
-              hassType: shortHandMapping[mapping[i]],
+              hassType: longToShort[indexToLong[i]],
             },
           }).then((response) => {
-            console.log("received", response.data);
             if (
               response.data &&
               !newReqsNeeded.some(
                 (item: RawClass) => item.no === response.data.no
               ) &&
-              !old_data.some((item: RawClass) => item.no === response.data.no)
+              !classesTaken.some(
+                (item: RawClass) => item.no === response.data.no
+              )
             ) {
               newReqsNeeded.push(response.data);
-              setReqsNeeded([...reqsNeeded, ...newReqsNeeded]);
+              onUpdateReqsNeeded(newReqsNeeded);
             } else {
               j--;
             }
@@ -88,7 +64,7 @@ const SuggestedClasses = () => {
     <div className="suggestedClassesContainer">
       <h4 className="card-header">Suggested Classes</h4>
       <TableContainer>
-        <Table variant="striped" colorScheme="teal">
+        <Table variant="striped" colorScheme="purple">
           <Thead>
             <Tr>
               <Th>Num.</Th>

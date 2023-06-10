@@ -2,69 +2,90 @@ import "./AddClass.css";
 import Axios from "axios";
 import RawClass from "./types";
 import { useState } from "react";
-import { Grid, GridItem } from "@chakra-ui/react";
+import {
+  Grid,
+  GridItem,
+  Button,
+  Alert,
+  AlertIcon,
+  CloseButton,
+} from "@chakra-ui/react";
 import { Input } from "@chakra-ui/react";
+import { longToIndex, shortToLong } from "./objects";
 
-const AddClass = () => {
-  const mapping: Record<string, number> = {
-    "HASS-H": 0,
-    "HASS-A": 1,
-    "HASS-S": 2,
-    "HASS-E": 3,
-    "CI-H": 4,
-    "CI-HW": 5,
-  };
-  const shortHandMapping = {
-    hh: "HASS-H",
-    ha: "HASS-A",
-    hs: "HASS-S",
-    he: "HASS-E",
-    ci: "CI-H",
-    cw: "CI-HW",
-  };
+interface AddClassProps {
+  onAddClass: (newClass: RawClass) => void;
+  onRemoveReqNeeded: (hassType: string) => void;
+}
 
+const AddClass = ({ onAddClass, onRemoveReqNeeded }: AddClassProps) => {
   const [classNumber, setClassNumber] = useState("");
+  const [alert, setAlert] = useState(false);
 
-  // function to add a class to the local storage database
+  const hideAlert = () => {
+    setAlert(false);
+  };
+
+  // function to add a class that user has taken
   const addAClass = () => {
     Axios.post("http://localhost:3000/addClass", {
       no: classNumber,
     }).then((response) => {
-      if (localStorage.getItem("classesTaken") == null) {
-        localStorage.setItem("classesTaken", "[]");
-      }
-      var oldData = JSON.parse(localStorage.getItem("classesTaken") as string);
-      // ensure this class isn't already in the local storage database
-      if (!oldData.some((item: RawClass) => item.no == response.data.no)) {
-        // add this class to the local storage database "classesTaken"
-        oldData.push(response.data);
-        localStorage.setItem("classesTaken", JSON.stringify(oldData));
-
-        if (localStorage.getItem("requirements_filled") == null) {
-          localStorage.setItem("requirements_filled", "[0, 0, 0, 0, 0]");
-        }
-        // update the requirements filled in local storage
-        var reqsFilled = JSON.parse(
-          localStorage.getItem("requirements_filled") as string
+      // if the response returns a message, then raise an alert
+      if (response.data.message) {
+        setAlert(true);
+      } else {
+        var oldData = JSON.parse(
+          localStorage.getItem("classesTaken") as string
         );
+        // ensure this class isn't already in the classesTaken database
+        if (!oldData.some((item: RawClass) => item.no == response.data.no)) {
+          // add this class to classesTaken
+          oldData.push(response.data);
+          localStorage.setItem("classesTaken", JSON.stringify(oldData));
 
-        // a CI-HW class is also a CI-H class
-        if (response.data["cw"]) {
-          reqsFilled[mapping["CI-H"]] += 1;
-        }
-        Object.entries(shortHandMapping).forEach(([key, value]) => {
-          if (response.data[key]) {
-            reqsFilled[mapping[value]] += 1;
+          var reqsFilled = JSON.parse(
+            localStorage.getItem("reqsSoFar") as string
+          );
+
+          var hassType: string = "";
+          // update reqsFilled accordingly (note a CI-HW class is also a CI-H class)
+          if (response.data["cw"]) {
+            hassType = "cw";
+            reqsFilled[longToIndex["CI-H"]] += 1;
           }
-        });
+          Object.entries(shortToLong).forEach(([key, value]) => {
+            if (response.data[key]) {
+              hassType = key;
+              reqsFilled[longToIndex[value]] += 1;
+            }
+          });
+          localStorage.setItem("reqsSoFar", JSON.stringify(reqsFilled));
 
-        localStorage.setItem("requirements_filled", JSON.stringify(reqsFilled));
+          onAddClass(response.data);
+          onRemoveReqNeeded(hassType);
+        }
       }
     });
   };
 
   return (
     <div className="addClassContainer">
+      {alert && (
+        <div className="alertContainer">
+          <Alert status="error">
+            <AlertIcon />
+            We couldn't find this class
+            <CloseButton
+              alignSelf="flex-start"
+              position="relative"
+              right={-1}
+              top={-1}
+              onClick={hideAlert}
+            />
+          </Alert>
+        </div>
+      )}
       <Grid templateColumns="repeat(3, 1fr)" gap={3}>
         <GridItem>
           <label className="addClassLabel">Add Class</label>
@@ -79,13 +100,9 @@ const AddClass = () => {
           />
         </GridItem>
         <GridItem>
-          <button
-            type="button"
-            className="btn btn-outline-info addClassButton"
-            onClick={addAClass}
-          >
+          <Button bg="purple.100" onClick={addAClass}>
             Add
-          </button>
+          </Button>
         </GridItem>
       </Grid>
     </div>

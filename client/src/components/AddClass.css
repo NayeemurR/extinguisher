@@ -1,9 +1,16 @@
 .addClassContainer {
-  margin-top: 2%;
-  margin-left: 2%;
   width: 45%;
 }
 
 .addClassLabel {
   color: #5271ff;
+}
+
+.alertContainer {
+  position: fixed;
+  top: 0;
+  left: 40%;
+  right: 0;
+  z-index: 0;
+  width: 23%;
 }
