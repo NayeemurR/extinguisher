@@ -95,7 +95,7 @@ const AddClass = ({ onAddClass, onRemoveReqNeeded }: AddClassProps) => {
             variant="flushed"
             placeholder="Class Number"
             onChange={(event) => {
-              setClassNumber(event.target.value);
+              setClassNumber(event.target.value.toUpperCase());
             }}
           />
         </GridItem>

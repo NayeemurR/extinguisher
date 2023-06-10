@@ -1,61 +1,30 @@
 import json
-# def combine_json(json1, json2):
-#     # Parse JSON strings into objects
-#     obj1 = json.loads(json1)["classes"]
-#     obj2 = json.loads(json2)["classes"]
-#     # print(obj1)
-
-#     # Merge the objects
-#     merged = {**obj1, **obj2}
-#     # print(merged)
-
-#     # Remove duplicates
-#     unique = {key: value for key, value in merged.items(
-#     ) if key not in obj1 or key not in obj2}
-#     # unique = {}
-#     # for key, value in merged.items():
-#     #     if key not in unique and (value["hh"] or value["ha"] or value["hs"] or value["he"] or value["ci"] or value["cw"]):
-#     #         unique[key] = value
-
-#     # Save combined JSON to a file
-#     with open('combined.json', 'w') as file:
-#         json.dump(unique, file)
-#     print(len(unique))
-#     return unique
 
 
-# # Read the contents of f22.json and s23.json
-# with open('f22.json', 'r') as file1, open('s23.json', 'r') as file2:
-#     json1 = file1.read()
-#     json2 = file2.read()
+def combine_json_files(file1, file2, output_file):
+    """
+    Combines the "classes" field of file1 and file2 and writes the combined data to output_file.
+    """
+    # Load data from the first JSON file
+    with open(file1, 'r') as f:
+        data1 = json.load(f)
 
-# # Apply the combine_json function
-# combined_json = combine_json(json1, json2)
-# # print(combined_json)
+    # Load data from the second JSON file
+    with open(file2, 'r') as f:
+        data2 = json.load(f)
 
+    # Combine the data from both files
+    combined_data = {**data1["classes"], **data2["classes"]}
 
-def combine_json(json1, json2):
-    # Parse JSON strings into objects
-    obj1 = json.loads(json1)["classes"]
-    obj2 = json.loads(json2)["classes"]
-    # Merge the objects
-    merged = {}
-    for key, value in obj1.items():
-        merged[key] = str(value)
-    for key, value in obj2.items():
-        merged[key] = str(value)
-
-    # Save combined JSON to a file
-    with open('combined.json', 'w') as file:
-        json.dump(merged, file)
-    # print(len(merged))
-    return merged
+    # Write the combined data to the output file
+    with open(output_file, 'w') as f:
+        json.dump(combined_data, f, indent=4)
 
 
-# Read the contents of f22.json and s23.json
-with open('f22.json', 'r') as file1, open('s23.json', 'r') as file2:
-    json1 = file1.read()
-    json2 = file2.read()
+# Specify the file paths
+file1 = 'f22.json'
+file2 = 's23.json'
+output_file = 'combined.json'
 
-# Apply the combine_json function
-combined_json = combine_json(json1, json2)
+# Call the function to combine the JSON files
+combine_json_files(file1, file2, output_file)
