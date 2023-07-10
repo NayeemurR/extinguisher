@@ -60,6 +60,22 @@ const SuggestedClasses = ({
     }
   }, []);
 
+  const formatContent = (classTaken: RawClass): string => {
+    const fields = [];
+    if (classTaken.hh) fields.push("HASS-H");
+    if (classTaken.ha) fields.push("HASS-A");
+    if (classTaken.hs) fields.push("HASS-S");
+    if (classTaken.he) fields.push("HASS-E");
+    if (classTaken.ci) fields.push("CI-H");
+    if (classTaken.cw) fields.push("CI-HW");
+
+    if (fields.length > 0) {
+      return fields.join(" / ");
+    } else {
+      return "";
+    }
+  };
+
   return (
     <div className="suggestedClassesContainer">
       <h4 className="card-header">Suggested Classes</h4>
@@ -74,20 +90,7 @@ const SuggestedClasses = ({
           </Thead>
           <Tbody>
             {reqsNeeded.map((req: RawClass) => {
-              let content;
-              if (req.hh) {
-                content = "HASS-H";
-              } else if (req.ha) {
-                content = "HASS-A";
-              } else if (req.hs) {
-                content = "HASS-S";
-              } else if (req.he) {
-                content = "HASS-E";
-              } else if (req.ci) {
-                content = "CI-H";
-              } else if (req.cw) {
-                content = "CI-HW";
-              }
+              const content = formatContent(req);
               return (
                 <Tr>
                   <Td>{req.no}</Td>
