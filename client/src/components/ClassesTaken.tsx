@@ -1,6 +1,6 @@
 import "./ClassesTaken.css";
 import RawClass from "./types";
-import { longToIndex, longToShort, shortToLong } from "./objects";
+import { longToIndex, longToShort } from "./objects";
 import {
   Table,
   Thead,
@@ -15,7 +15,7 @@ import { DeleteIcon } from "@chakra-ui/icons";
 
 interface ClassesTakenProps {
   onDeleteClass: (index: number) => void;
-  onAddReqNeeded: (hassType: string) => void;
+  onAddReqNeeded: (hassType: string[]) => void;
 }
 
 const ClassesTaken = ({ onDeleteClass, onAddReqNeeded }: ClassesTakenProps) => {
@@ -23,18 +23,44 @@ const ClassesTaken = ({ onDeleteClass, onAddReqNeeded }: ClassesTakenProps) => {
     localStorage.getItem("classesTaken") as string
   );
 
-  const handdleDeleteClass = (index: number, content: string) => {
+  const handleDeleteClass = (index: number, content: string[]) => {
     // update classesTaken
     const updatedClassesTaken = [...storageClassesTaken];
     updatedClassesTaken.splice(index, 1);
     localStorage.setItem("classesTaken", JSON.stringify(updatedClassesTaken));
-    // update reqsSoFar
-    const reqsSoFar = JSON.parse(localStorage.getItem("reqsSoFar") as string);
-    reqsSoFar[longToIndex[content]] -= 1;
-    localStorage.setItem("reqsSoFar", JSON.stringify(reqsSoFar));
 
-    const hassType = longToShort[content];
-    onAddReqNeeded(hassType);
+    // update reqsSoFar (check for CI-HW) CI-HW is a CI-H, so REMOVE THAT
+    const reqsSoFar = JSON.parse(localStorage.getItem("reqsSoFar") as string);
+    var hassTypes: string[] = [];
+
+    content.forEach((hassType) => {
+      if (hassType === "CI-HW") {
+        reqsSoFar[longToIndex["CI-H"]] -= 1;
+        hassTypes.push(hassType);
+      } else {
+        reqsSoFar[longToIndex[hassType]] -= 1;
+        hassTypes.push(longToShort[hassType]);
+      }
+    });
+
+    localStorage.setItem("reqsSoFar", JSON.stringify(reqsSoFar));
+    onAddReqNeeded(hassTypes);
+  };
+
+  const formatContent = (classTaken: RawClass): string => {
+    const fields = [];
+    if (classTaken.hh) fields.push("HASS-H");
+    if (classTaken.ha) fields.push("HASS-A");
+    if (classTaken.hs) fields.push("HASS-S");
+    if (classTaken.he) fields.push("HASS-E");
+    if (classTaken.ci) fields.push("CI-H");
+    if (classTaken.cw) fields.push("CI-HW");
+
+    if (fields.length > 0) {
+      return fields.join(" / ");
+    } else {
+      return "";
+    }
   };
 
   return (
@@ -51,20 +77,7 @@ const ClassesTaken = ({ onDeleteClass, onAddReqNeeded }: ClassesTakenProps) => {
           </Thead>
           <Tbody>
             {storageClassesTaken.map((classTaken: RawClass, index: number) => {
-              let content = "";
-              if (classTaken.hh) {
-                content = shortToLong.hh;
-              } else if (classTaken.ha) {
-                content = shortToLong.ha;
-              } else if (classTaken.hs) {
-                content = shortToLong.hs;
-              } else if (classTaken.he) {
-                content = shortToLong.he;
-              } else if (classTaken.ci) {
-                content = shortToLong.ci;
-              } else if (classTaken.cw) {
-                content = shortToLong.cw;
-              }
+              const content = formatContent(classTaken);
               return (
                 <Tr>
                   <Td>{classTaken.no}</Td>
@@ -77,7 +90,8 @@ const ClassesTaken = ({ onDeleteClass, onAddReqNeeded }: ClassesTakenProps) => {
                       size="sm"
                       onClick={() => {
                         onDeleteClass(index);
-                        handdleDeleteClass(index, content);
+                        // send content as a list of strings split on " / "
+                        handleDeleteClass(index, content.split(" / "));
                       }}
                     />
                   </Td>
