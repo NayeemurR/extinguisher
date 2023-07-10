@@ -15,16 +15,12 @@ import { longToIndex, shortToLong } from "./objects";
 
 interface AddClassProps {
   onAddClass: (newClass: RawClass) => void;
-  onRemoveReqNeeded: (hassType: string) => void;
+  onRemoveReqsNeeded: (hassType: string[]) => void;
 }
 
-const AddClass = ({ onAddClass, onRemoveReqNeeded }: AddClassProps) => {
+const AddClass = ({ onAddClass, onRemoveReqsNeeded }: AddClassProps) => {
   const [classNumber, setClassNumber] = useState("");
   const [alert, setAlert] = useState(false);
-
-  const hideAlert = () => {
-    setAlert(false);
-  };
 
   // function to add a class that user has taken
   const addAClass = () => {
@@ -44,26 +40,25 @@ const AddClass = ({ onAddClass, onRemoveReqNeeded }: AddClassProps) => {
           oldData.push(response.data);
           localStorage.setItem("classesTaken", JSON.stringify(oldData));
 
+          // update reqsFilled accordingly (note a CI-HW class is also a CI-H class)
           var reqsFilled = JSON.parse(
             localStorage.getItem("reqsSoFar") as string
           );
 
-          var hassType: string = "";
-          // update reqsFilled accordingly (note a CI-HW class is also a CI-H class)
+          var hassTypes: string[] = [];
           if (response.data["cw"]) {
-            hassType = "cw";
             reqsFilled[longToIndex["CI-H"]] += 1;
           }
           Object.entries(shortToLong).forEach(([key, value]) => {
-            if (response.data[key]) {
-              hassType = key;
+            if (key != "cw" && response.data[key]) {
+              hassTypes.push(key);
               reqsFilled[longToIndex[value]] += 1;
             }
           });
           localStorage.setItem("reqsSoFar", JSON.stringify(reqsFilled));
 
           onAddClass(response.data);
-          onRemoveReqNeeded(hassType);
+          onRemoveReqsNeeded(hassTypes);
         }
       }
     });
@@ -81,7 +76,9 @@ const AddClass = ({ onAddClass, onRemoveReqNeeded }: AddClassProps) => {
               position="relative"
               right={-1}
               top={-1}
-              onClick={hideAlert}
+              onClick={() => {
+                setAlert(false);
+              }}
             />
           </Alert>
         </div>
